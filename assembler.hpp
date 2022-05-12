@@ -891,9 +891,9 @@ namespace __assembler_namespace {
                 if (i.is_string) {
                     if (isIn(labels,i.code)) {
                         unsigned int pos = labels[i.code];
-                        for (int i = 0; i < addrlen; i++) {
-                            finishedcode.code.push_back(pos & 0xFF);
-                            pos >>= 8;
+                        // write pos from high to low
+                        for (int i = addrlen; i > 0; i--) {
+                            finishedcode.code.push_back((pos >> (8*(i-1))) & 0xFF);
                         }
                     } else throw_err_comp("Uninterpreted string found while finalizing \"" + i.code + "\"");
                 } else {

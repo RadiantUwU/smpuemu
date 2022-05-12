@@ -1,1 +1,7 @@
-/assembler/
+assembler_copy.hpp
+list.hpp
+.vscode
+*.exe
+*.ilk
+*.obj
+*.pdb
