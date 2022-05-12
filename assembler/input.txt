@@ -1,10 +1,8 @@
-.org 0x0500
-
-ADR readLocation /* set the reading address */
-LDA /* read */
-ADR writeLocation /* set the writing address */
-STA /* write */
-HLT /* stop */
+ADR readLocation ;; set the reading address 
+LDA ;; read
+ADR writeLocation ;; set the writing address 
+STA ;; write
+HLT ;; stop
 
 :readLocation
 12
