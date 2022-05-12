@@ -501,6 +501,7 @@ namespace __assembler_namespace {
             mul[0] = 0;
             mul[1] = 0;
             doingop = false;
+            trueorg = 0;
         }
         Assembler() {}
     protected:
@@ -728,7 +729,8 @@ namespace __assembler_namespace {
             for (const auto& i : new_com.code) {
                 if (!i.is_string) {
                     codewconsts.code.push_back(i);
-                } else if (isIn(consts,i.code)) {
+                } else if (i.code.length() == 0) continue;
+                  else if (isIn(consts,i.code)) {
                     codewconsts.code.push_back(consts[i.code]);
                 } else switch(i.code[0]) {
                     case '0':
@@ -863,9 +865,9 @@ namespace __assembler_namespace {
                             throw_err_comp("Error interpreting number: " + i.code);
                         }
                     }
-                    else if (i.code == ".org") {
-                        in_org = true;
-                    } else if (i.code[0] == ':') {
+                    else if (i.code == ".org") in_org = true;
+                    else if (i.code == ".reset_org") codewconsts.pos = trueorg;
+                    else if (i.code[0] == ':') {
                         if (isIn(labels,i.code)) {
                             throw_err("Cannot redefine label " + i.code);
                         } else {
@@ -873,12 +875,14 @@ namespace __assembler_namespace {
                         }
                     } else {
                         print_debug("Found a reference to a possible label: " + i.code);
-                        codewconsts.pos+=3;
+                        codewconsts.pos+=addrlen;
+                        trueorg+=addrlen;
                         codewlabels.code.push_back(i);
                     }
                 } else {
                     codewlabels.code.push_back(i);
                     ++codewconsts.pos;
+                    ++trueorg;
                 }
             }
             print_debug("Finishing build stage 4 on callstack " + callstack.back());
@@ -1034,6 +1038,7 @@ namespace __assembler_namespace {
             ERROR //handled
         } inst;
         bool in_org = false;
+        unsigned long long trueorg = 0;
         unsigned long long posix = 0;
         temp_inst_t temp_inst[3];
         unsigned long long exec = 0;
