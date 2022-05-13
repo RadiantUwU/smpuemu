@@ -11,23 +11,24 @@
 Assembler a;
 void init_asm() {
     a.consts = {
-        {"HLT",0 }, {"NOP",1 },
+        {"hlt",0 }, {"nop",1 },
 
-        {"ADR",2 },
-        {"LDA",3 }, {"STA",4 }, {"LDB",5 }, {"SWP",6 },
-        {"LDH",7 }, {"LDL",8 }, {"STH",9 }, {"STL",10}, {"LDQ",11}, {"STQ",12},
-        {"CLA",13}, {"CLB",14}, {"CLQ",15},
+        {"adr",2 },
+        {"lda",3 }, {"sta",4 }, {"ldb",5 }, {"swp",6 },
+        {"ldh",7 }, {"ldl",8 }, {"sth",9 }, {"stl",10}, {"ldq",11}, {"stq",12},
+        {"cla",13}, {"clb",14}, {"clq",15},
 
-        {"ADD",20},{"ADDC",21}, {"SUB",22},{"SUBC",23},
-        {"SHL",24},{"SHLC",25}, {"SHR",26},{"SHRC",27},
-        {"AND",28}, {"OR",29},  {"XOR",30},{"NAND",31}, {"NOR",32},{"XNOR",33},
-        {"CKSM",34},{"CKSMC",35},
-        {"INCR",36},{"DECR",37},
+        {"add",20},{"addc",21}, {"sub",22},{"subc",23},
+        {"shl",24},{"shlc",25}, {"shr",26},{"shrc",27},
+        {"and",28}, {"or",29},  {"xor",30},{"nand",31}, {"nor",32},{"xnor",33},
+        {"cksm",34},{"cksmc",35},
+        {"incr",36},{"decr",37},
 
-        {"JMP",38},{"JMPC",39},{"JMPZ",40},{"JMPQ",41},
-        {"PSH",42},{"POP",43},{"SUBR",44},{"RET",45}
+        {"jmp",38},{"jmpc",39},{"jmpz",40},{"jmpq",41},
+        {"psh",42},{"pop",43},{"subr",44},{"ret",45}
     };
     a.addrlen = 2;
+    a.addDef("stb","swp ldb swp");
 }
 int main(int argc, char** argv) {
     init_asm();

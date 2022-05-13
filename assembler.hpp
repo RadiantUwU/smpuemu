@@ -31,6 +31,7 @@ namespace __assembler_namespace {
     struct Definition {
         string def;
         Definition(string def) : def(def) {}
+        Definition(const char* def) : def(def) {}
         Definition() {}
     };
     struct CodeSegment {
@@ -508,6 +509,10 @@ namespace __assembler_namespace {
             mul[1] = 0;
             doingop = false;
             trueorg = 0;
+            is_full_org = false;
+        }
+        void addDef(string name, Definition def) {
+            definitions[name] = def;
         }
         Assembler() {}
     protected:
@@ -753,8 +758,8 @@ namespace __assembler_namespace {
                 if (!i.is_string) {
                     codewconsts.code.push_back(i);
                 } else if (i.code.length() == 0) continue;
-                  else if (isIn(consts,i.code)) {
-                    codewconsts.code.push_back(consts[i.code]);
+                  else if (isIn(consts,toLower(i.code))) {
+                    codewconsts.code.push_back(consts[toLower(i.code)]);
                 } else switch(i.code[0]) {
                     case '0':
                     case '1':
