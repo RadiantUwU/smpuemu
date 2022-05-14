@@ -31,18 +31,27 @@ namespace __assembler_namespace {
     struct Definition {
         string def;
         Definition(string def) : def(def) {}
+        Definition(const char* def) : def(def) {}
         Definition() {}
     };
     struct CodeSegment {
         string code;
         unsigned char value;
+        unsigned long long adr;
         bool is_string = false;
+        bool is_org = false;
+        bool isfull = false;
         CodeSegment(string code) : code(code), is_string(true) {}
         CodeSegment(unsigned char value) : value(value) {}
+        CodeSegment(unsigned long long adr) : adr(adr), is_org(true) {}
+        CodeSegment(unsigned long long adr, bool full_org) : adr(adr), is_org(true), isfull(full_org) {}
         CodeSegment(const CodeSegment& c) {
             if (c.is_string) {
                 code = c.code;
                 is_string = true;
+            } else if (c.is_org) {
+                adr = c.adr;
+                is_org = true;
             } else {
                 value = c.value;
                 is_string = false;
@@ -53,16 +62,15 @@ namespace __assembler_namespace {
             if (c.is_string) {
                 code = c.code;
                 is_string = true;
+            } else if (c.is_org) {
+                adr = c.adr;
+                is_org = true;
             } else {
                 value = c.value;
                 is_string = false;
             }
             return *this;
         }
-        //thank you
-        //no problem
-        //thank you
-
         ~CodeSegment() {
             if (is_string) {
                 code.clear();
@@ -490,7 +498,6 @@ namespace __assembler_namespace {
             definitions.clear();
             labels.clear();
             includedalready.clear();
-            in_org = false;
             inst = NONE;
             posix = 0;
             exec = 0;
@@ -501,12 +508,18 @@ namespace __assembler_namespace {
             mul[0] = 0;
             mul[1] = 0;
             doingop = false;
+            trueorg = 0;
+            is_full_org = false;
+        }
+        void addDef(string name, Definition def) {
+            definitions[name] = def;
         }
         Assembler() {}
     protected:
         void uncomment(string asm_code) {
             string buffer;
             bool inComment = false;
+            bool inNLCom = false;
             asm_code+= " ";
             print_debug("Beginning build stage 1 for callstack " + callstack.back());
             for (char c : asm_code) switch (c) {
@@ -517,10 +530,13 @@ namespace __assembler_namespace {
                         if (inComment && buffer == "*/") {
                             inComment = false;
                             buffer.clear();
-                        } else if (!inComment && buffer == "/*") {
+                        } else if (!inComment && !inNLCom && buffer == "/*") {
                             inComment = true;
                             buffer.clear();
-                        } else if (!inComment) {
+                        } else if (!inComment && !inNLCom && buffer == ";;") {
+                            inNLCom = true;
+                            buffer.clear();
+                        } else if (!inComment && !inNLCom) {
                             if (count(buffer, '"') == 0 
                             || (count(buffer,'"') > 0 && !startsWith(buffer,"0s")) 
                             || count(buffer,'"') % 2 == 0) {
@@ -533,6 +549,8 @@ namespace __assembler_namespace {
                             buffer.clear();
                         }
                     }
+                    if (c == '\n') inNLCom = false;
+                case '\r':
                     break;
                 default:
                     buffer += c;
@@ -567,11 +585,18 @@ namespace __assembler_namespace {
                         else if (s == ".if") inst = IF;
                         else if (s == ".undef") inst = UNDEF;
                         else if (s == ".ifdef") inst = IFDEF;
+                        else if (s == ".ifndef") inst = IFNDEF;
                         else if (s == ".elif") inst = IF;
                         else if (s == ".elifdef") inst = IFDEF;
                         else if (s == ".elifndef") inst = IFNDEF;
                         else if (s == ".error") inst = ERROR;
                         else if (s == ".include") inst = INCLUDE;
+                        else if (s == ".org") inst = ORG;
+                        else if (s == ".fullorg") {
+                            inst = ORG;
+                            is_full_org = true;
+                        }
+                        else if (s == ".end");
                         else insf = true;
                         if (!insf) posix = 0;
                     } else insf = true;
@@ -579,7 +604,7 @@ namespace __assembler_namespace {
                         case FILLEMP:
                             if (true) {
                                 unsigned long long a = numInterpretInt(s);
-                                for (unsigned int i = 0; i < a; i++) codewdefs.code.push_back(0);
+                                for (unsigned int i = 0; i < a; i++) codewdefs.code.push_back((unsigned char)0);
                                 print_debug("Filling " + to_string(a) + " bytes with 0.");
                                 inst = NONE;
                                 break;
@@ -716,6 +741,11 @@ namespace __assembler_namespace {
                                 }
                             }
                             break;
+                        case ORG:
+                            codewdefs.code.push_back(CodeSegment((unsigned long long)numInterpretInt(s),is_full_org));
+                            is_full_org = false;
+                            inst = NONE;
+                            break;
                     }
                 }
             }
@@ -728,8 +758,9 @@ namespace __assembler_namespace {
             for (const auto& i : new_com.code) {
                 if (!i.is_string) {
                     codewconsts.code.push_back(i);
-                } else if (isIn(consts,i.code)) {
-                    codewconsts.code.push_back(consts[i.code]);
+                } else if (i.code.length() == 0) continue;
+                  else if (isIn(consts,toLower(i.code))) {
+                    codewconsts.code.push_back(consts[toLower(i.code)]);
                 } else switch(i.code[0]) {
                     case '0':
                     case '1':
@@ -853,19 +884,8 @@ namespace __assembler_namespace {
             for (const auto& i : new_com.code) {
                 if (i.is_string) {
                     if (i.code.length() == 0) continue;
-                    if (in_org) {
-                        in_org = false;
-                        try {
-                            codewconsts.pos = numInterpretInt(i.code);
-
-                        } catch (std::exception e) {
-                            print_debug((string)"Failed to interpret number:" + e.what());
-                            throw_err_comp("Error interpreting number: " + i.code);
-                        }
-                    }
-                    else if (i.code == ".org") {
-                        in_org = true;
-                    } else if (i.code[0] == ':') {
+                    else if (i.code == ".reorg") codewconsts.pos = trueorg;
+                    else if (i.code[0] == ':') {
                         if (isIn(labels,i.code)) {
                             throw_err("Cannot redefine label " + i.code);
                         } else {
@@ -873,12 +893,17 @@ namespace __assembler_namespace {
                         }
                     } else {
                         print_debug("Found a reference to a possible label: " + i.code);
-                        codewconsts.pos+=3;
+                        codewconsts.pos+=addrlen;
+                        trueorg+=addrlen;
                         codewlabels.code.push_back(i);
                     }
+                } else if (i.is_org) {
+                    codewconsts.pos = i.adr;
+                    if (i.isfull) trueorg = i.adr;
                 } else {
                     codewlabels.code.push_back(i);
                     ++codewconsts.pos;
+                    ++trueorg;
                 }
             }
             print_debug("Finishing build stage 4 on callstack " + callstack.back());
@@ -891,9 +916,9 @@ namespace __assembler_namespace {
                 if (i.is_string) {
                     if (isIn(labels,i.code)) {
                         unsigned int pos = labels[i.code];
-                        for (int i = 0; i < addrlen; i++) {
-                            finishedcode.code.push_back(pos & 0xFF);
-                            pos >>= 8;
+                        // write pos from high to low
+                        for (int i = addrlen; i > 0; i--) {
+                            finishedcode.code.push_back((unsigned char)((pos >> (8*(i-1))) & 0xFF));
                         }
                     } else throw_err_comp("Uninterpreted string found while finalizing \"" + i.code + "\"");
                 } else {
@@ -1031,9 +1056,11 @@ namespace __assembler_namespace {
             FILL, //handled
             FILLEMP, //handled
             INCLUDE, //handled
-            ERROR //handled
+            ERROR, //handled
+            ORG
         } inst;
-        bool in_org = false;
+        bool is_full_org = false;
+        unsigned long long trueorg = 0;
         unsigned long long posix = 0;
         temp_inst_t temp_inst[3];
         unsigned long long exec = 0;

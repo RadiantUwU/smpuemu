@@ -3,35 +3,32 @@
 #include <vector>
 #include <sstream>
 
-#include "../head/assembler.hpp"
+#include "../assembler.hpp"
+#include "../colors.hpp"
 
-#define NDEBUG
+//#define NDEBUG
 
 Assembler a;
 void init_asm() {
     a.consts = {
-        {"CSH",0},{"NOP",1},{"RST",2},
-        {"EI1",3},{"DI1",4},{"IN1",5},{"IC1",6},{"IL1",7},{"IM1",8},{"IH1",9},{"IA1",10},
-        {"EI2",11},{"DI2",12},{"IN2",13},{"IC2",14},{"IL2",15},{"IM2",16},{"IH2",17},{"IA2",18},
-        {"SAL",19},{"SAM",20},{"SAH",21},{"SEA",22},{"INL",23},{"INM",24},{"INH",25},{"DEL",26},{"DEM",27},{"DEH",28},
-        {"LDR",29},{"STR",30},{"SER",31},{"IMR",32},{"DMR",33},{"EAI",34},{"DAI",35},
-        {"MSK",36},{"RAL",37},{"RAM",38},{"RAH",39},{"MOV",40},{"MVS",41},{"IAR",42},{"DAR",43},
-        {"ADD",44},{"SUB",45},{"MUL",46},{"MOD",47},{"DIV",48},{"SHL",49},{"SHR",50},{"AND",51},{"OR", 52},{"XOR",53},{"NAD",54},{"NOR",55},{"NXR",56},{"SAB",57},{"NOT",58},{"SJC",59},
-        {"JMP",60},{"JMI",61},{"JSR",62},{"JSI",63},{"JMN",64},{"JSN",65},{"REV",66},{"RRA",67},{"RRB",68},{"RRC",69},{"GRA",70},{"GRB",71},{"GRC",72},{"RET",73},{"PSH",74},{"POP",75},{"SRP",76},{"RSP",77},
-        {"KER",78},{"ENK",79},{"DIK",80},{"KKS",81},{"CKB",82},
-        {"TME",83},{"TMU",84},{"TMS",85},{"TMF",86},{"TMR",87},{"TMX",88},{"TMY",89},{"TMP",90},{"TMW",91},{"TMC",92},{"TMM",93},{"TAS",94},{"TRI",95},{"TRD",96},{"TRR",97},{"TRF",98},{"TRM",99},{"TKT",100},{"TST",101},
-        {"EXQ",102},{"EXG",103},{"EXR",104},{"EXS",105},{"EXW",106},{"EXF",107},{"EXI",108},{"EXP",109},{"EXA",110},
-        {"LCS",111},{"UCS",112},
-        {"TEA",113},{"TDA",114},
-        {"JXR",115},{"JYR",116},
-        {"BEP",117},{"STB",118},
-        {"PSA",119},{"POA",120},
-        {"SWP",121},{"CSP",122},{"SWA",123},{"IFM",124},{"UFM",125},
-        {"MEMCPYA1",126},{"MEMCPYA2",127},{"MEMSET",128},{"MEMCSZ",129},{"MEMCPY",130},
-        {"$temp0",63},{"$temp1",62},{"$temp2",61},{"$temp3",60}
+        {"hlt",0 }, {"nop",1 },
 
+        {"adr",2 },
+        {"lda",3 }, {"sta",4 }, {"ldb",5 }, {"swp",6 },
+        {"ldh",7 }, {"ldl",8 }, {"sth",9 }, {"stl",10}, {"ldq",11}, {"stq",12},
+        {"cla",13}, {"clb",14}, {"clq",15},
+
+        {"add",20},{"addc",21}, {"sub",22},{"subc",23},
+        {"shl",24},{"shlc",25}, {"shr",26},{"shrc",27},
+        {"and",28}, {"or",29},  {"xor",30},{"nand",31}, {"nor",32},{"xnor",33},
+        {"cksm",34},{"cksmc",35},
+        {"incr",36},{"decr",37},
+
+        {"jmp",38},{"jmpc",39},{"jmpz",40},{"jmpq",41},
+        {"psh",42},{"pop",43},{"subr",44},{"ret",45}
     };
-    a.addrlen = 3;
+    a.addrlen = 2;
+    a.addDef("stb","swp ldb swp");
 }
 int main(int argc, char** argv) {
     init_asm();
