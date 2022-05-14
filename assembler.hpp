@@ -520,7 +520,7 @@ namespace __assembler_namespace {
             string buffer;
             bool inComment = false;
             bool inNLCom = false;
-            asm_code+= " ";
+            asm_code+= "\n";
             print_debug("Beginning build stage 1 for callstack " + callstack.back());
             for (char c : asm_code) switch (c) {
                 case ' ':
@@ -550,6 +550,7 @@ namespace __assembler_namespace {
                         }
                     }
                     if (c == '\n') inNLCom = false;
+                case '\r':
                     break;
                 default:
                     buffer += c;
