@@ -660,6 +660,7 @@ namespace __assembler_namespace {
                                 inst = NONE;
                                 temp_inst[0].s.pop_back();
                                 print_warning("Use of .if but its not implemented in callstack " + callstack.back());
+                                temp_inst[0].s.clear();
                                 //unimplemented
                             } else temp_inst[0].s += s + " ";
                             break;
